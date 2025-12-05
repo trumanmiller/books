@@ -13,12 +13,12 @@ export const PeriodDelimitedStrategy: AuthorSplitStrategy = {
   name: "period-delimited",
   detect: (text) => {
     if (text.includes(" & ") || text.includes(" and ")) return false;
-    const matches = text.match(/[a-zа-яё]{3,}\.\s+[A-ZА-ЯЁ]/gi) || [];
+    const matches = text.match(/[a-zа-яёA-ZА-ЯЁ]{3,}\.\s*(?=[A-ZА-ЯЁ]|$)/g) || [];
     return matches.length >= 2;
   },
   split: (text) => {
     // Lookbehind ensures we only split after 3+ letter words
-    const parts = text.split(/(?<=[a-zа-яё]{3,})\.\s+/gi);
+    const parts = text.split(/(?<=[a-zа-яёA-ZА-ЯЁ]{3,})\.\s+/g);
     return parts.map((p) => p.trim()).filter(Boolean);
   },
 };

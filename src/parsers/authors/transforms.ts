@@ -36,7 +36,7 @@ export const expandAbbreviations: AuthorTransform = (text) => {
 
 // Remove trailing period only if last word is 3+ chars (preserves initials)
 export const removeTrailingPeriod: AuthorTransform = (text) => {
-  return text.replace(/\b([a-zа-яё]{3,})\.\s*$/i, "$1");
+  return text.replace(/([a-zа-яёA-ZА-ЯЁ]{3,})\.\s*$/i, "$1");
 };
 
 export const reverseLastNameFirst: AuthorTransform = (text) => {
