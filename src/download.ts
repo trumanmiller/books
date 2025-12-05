@@ -1,11 +1,11 @@
-import type { DownloadUrls } from './types.ts';
-import { ANNAS_ARCHIVE_BASE, LIBGEN_BASE, IPFS_GATEWAY, USER_AGENT } from './constants.ts';
-import { createNetworkError } from './errors.ts';
-import { parseLibgenMirrors } from './parsers/download-page.ts';
+import type { DownloadUrls } from "./types.ts";
+import { ANNAS_ARCHIVE_BASE, LIBGEN_BASE, IPFS_GATEWAY, USER_AGENT } from "./constants.ts";
+import { createNetworkError } from "./errors.ts";
+import { parseLibgenMirrors } from "./parsers/download-page.ts";
 
 export async function getDownloadUrls(bookId: string): Promise<DownloadUrls> {
   if (!bookId?.trim()) {
-    throw new TypeError('Book ID cannot be empty');
+    throw new TypeError("Book ID cannot be empty");
   }
 
   const urls: DownloadUrls = {
@@ -28,7 +28,7 @@ export async function getDownloadUrls(bookId: string): Promise<DownloadUrls> {
   const libgenHtml = await fetchHtml(libgenUrl);
   const mirrors = parseLibgenMirrors(libgenHtml);
 
-  urls.mirrors = mirrors.map(path => `${LIBGEN_BASE}/${path}`);
+  urls.mirrors = mirrors.map((path) => `${LIBGEN_BASE}/${path}`);
 
   return urls;
 }
@@ -36,10 +36,10 @@ export async function getDownloadUrls(bookId: string): Promise<DownloadUrls> {
 function extractIpfsCid(data: Record<string, unknown>): string | null {
   if (Array.isArray(data.ipfs_cids) && data.ipfs_cids.length > 0) {
     const cid = data.ipfs_cids[0];
-    return typeof cid === 'string' ? cid : null;
+    return typeof cid === "string" ? cid : null;
   }
 
-  if (typeof data.ipfs === 'string') {
+  if (typeof data.ipfs === "string") {
     return data.ipfs;
   }
 
@@ -48,7 +48,7 @@ function extractIpfsCid(data: Record<string, unknown>): string | null {
 
 async function fetchHtml(url: string): Promise<string> {
   const response = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT },
+    headers: { "User-Agent": USER_AGENT },
   });
 
   if (!response.ok) {
@@ -60,7 +60,7 @@ async function fetchHtml(url: string): Promise<string> {
 
 async function fetchJson(url: string): Promise<Record<string, unknown>> {
   const response = await fetch(url, {
-    headers: { 'User-Agent': USER_AGENT },
+    headers: { "User-Agent": USER_AGENT },
   });
 
   if (!response.ok) {

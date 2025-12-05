@@ -1,5 +1,5 @@
-import { load } from 'cheerio';
-import { createParseError } from '../errors.ts';
+import { load } from "cheerio";
+import { createParseError } from "../errors.ts";
 
 export function parseLibgenMirrors(html: string): string[] {
   try {
@@ -7,7 +7,7 @@ export function parseLibgenMirrors(html: string): string[] {
     const mirrors: string[] = [];
 
     $('a:has(h2:contains("GET"))').each((_, element) => {
-      const href = $(element).attr('href');
+      const href = $(element).attr("href");
       if (href) {
         mirrors.push(href);
       }
@@ -15,6 +15,6 @@ export function parseLibgenMirrors(html: string): string[] {
 
     return mirrors;
   } catch (err) {
-    throw createParseError('Failed to parse download page');
+    throw createParseError("Failed to parse download page");
   }
 }
