@@ -18,9 +18,7 @@ export function parseLibgenMirrors(html: string): string[] {
 }
 
 export function extractIpfsCidFromMetadata(data: unknown): string | null {
-  if (typeof data !== "object" || data === null) {
-    return null;
-  }
+  if (typeof data !== "object" || data === null) return null;
 
   const record = data as Record<string, unknown>;
 

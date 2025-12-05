@@ -24,7 +24,7 @@ export async function getDownloadUrls(bookId: string): Promise<DownloadUrls> {
       result.ipfs = `${IPFS_GATEWAY}/${ipfsCid}`;
     }
   } catch {
-    // IPFS not available, continue to Libgen mirrors (slower)
+    // IPFS not available, continue to Libgen mirrors
   }
 
   try {

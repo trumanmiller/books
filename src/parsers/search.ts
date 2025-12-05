@@ -2,7 +2,7 @@ import { load } from "cheerio";
 import type { CheerioAPI, Cheerio } from "cheerio";
 import type { Element } from "domhandler";
 import type { Book } from "../types.ts";
-import { parseAuthors } from "./authors.ts";
+import { parseAuthors } from "./authors/index.ts";
 
 export function parseSearchResults(html: string): Book[] {
   const $ = load(html);
@@ -30,7 +30,8 @@ function parseBookElement(
   }
 
   const authorText = extractAuthorText($element);
-  const authors = parseAuthors(authorText);
+  const publisherText = extractPublisherText($element);
+  const authors = parseAuthors(authorText, publisherText);
   const metadata = extractMetadata($element);
   const thumbnail = $element.find("img").attr("src");
 
@@ -48,9 +49,7 @@ function parseBookElement(
 
 function extractBookId($element: Cheerio<Element>): string | null {
   const href = $element.find("a[href*='/md5/']").first().attr("href");
-  if (!href) {
-    return null;
-  }
+  if (!href) return null;
 
   const parts = href.split("/");
   const id = parts[parts.length - 1];
@@ -70,6 +69,18 @@ function extractAuthorText($element: Cheerio<Element>): string {
     .trim();
 }
 
+function extractPublisherText($element: Cheerio<Element>): string {
+  const links = $element.find("a[href*='/search?q=']");
+  if (links.length < 2) return "";
+
+  const publisherLink = links.eq(1);
+  if (publisherLink.find("span[class*='company']").length > 0) {
+    return publisherLink.text().trim();
+  }
+
+  return "";
+}
+
 function extractMetadata($element: Cheerio<Element>) {
   const metadataText = $element.find(".text-gray-800").text();
   const parts = metadataText.split(" · ").map((part) => part.trim());
@@ -84,9 +95,7 @@ function extractMetadata($element: Cheerio<Element>) {
   let year: number | undefined;
   for (const part of parts) {
     year = extractYear(part);
-    if (year !== undefined) {
-      break;
-    }
+    if (year !== undefined) break;
   }
 
   return {
@@ -98,19 +107,13 @@ function extractMetadata($element: Cheerio<Element>) {
 }
 
 function extractLanguageCode(text: string | undefined): string | undefined {
-  if (!text) {
-    return undefined;
-  }
-
+  if (!text) return undefined;
   const match = text.match(/\[([a-z]{2,3})\]/i);
   return match?.[1]?.toLowerCase();
 }
 
 function extractYear(text: string | undefined): number | undefined {
-  if (!text) {
-    return undefined;
-  }
-
+  if (!text) return undefined;
   const match = text.match(/\b(19|20)\d{2}\b/);
   return match ? parseInt(match[0], 10) : undefined;
 }
