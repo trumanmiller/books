@@ -1,47 +1,32 @@
 import { load } from "cheerio";
-import type { Cheerio, CheerioAPI } from "cheerio";
+import type { CheerioAPI, Cheerio } from "cheerio";
 import type { Element } from "domhandler";
-import { type } from "arktype";
-import { BookSchema } from "../types.ts";
 import type { Book } from "../types.ts";
-import { createParseError } from "../errors.ts";
 
-export function parseSearchResults(html: string, limit?: number): Book[] {
+export function parseSearchResults(html: string): Book[] {
   const $ = load(html);
   const books: Book[] = [];
 
-  const bookElements = $(".js-aarecord-list-outer .flex.pt-3");
-
-  bookElements.each((_, element) => {
-    try {
-      const book = parseBookElement($, $(element));
-
-      if (book) {
-        // Validate with ArkType
-        const validated = BookSchema(book);
-
-        if (!(validated instanceof type.errors)) {
-          books.push(validated);
-        }
-      }
-    } catch {
-      // Skip malformed entries silently
+  $(".js-aarecord-list-outer .flex.pt-3").each((_, element) => {
+    const book = parseBookElement($, $(element));
+    if (book) {
+      books.push(book);
     }
   });
 
-  if (books.length === 0 && bookElements.length > 0) {
-    throw createParseError("Could not parse any books from search results");
-  }
-
-  return limit ? books.slice(0, limit) : books;
+  return books;
 }
 
-function parseBookElement(_$: CheerioAPI, $element: Cheerio<Element>): Partial<Book> | null {
-  const id = extractId($element);
-  if (!id) return null;
-
+function parseBookElement(
+  _$: CheerioAPI,
+  $element: Cheerio<Element>,
+): Book | null {
+  const id = extractBookId($element);
   const title = extractTitle($element);
-  if (!title) return null;
+
+  if (!id || !title) {
+    return null;
+  }
 
   const authors = extractAuthors($element);
   const metadata = extractMetadata($element);
@@ -59,12 +44,15 @@ function parseBookElement(_$: CheerioAPI, $element: Cheerio<Element>): Partial<B
   };
 }
 
-function extractId($element: Cheerio<Element>): string | null {
+function extractBookId($element: Cheerio<Element>): string | null {
   const href = $element.find("a[href*='/md5/']").first().attr("href");
-  if (!href) return null;
+  if (!href) {
+    return null;
+  }
 
   const parts = href.split("/");
-  return parts[parts.length - 1] || null;
+  const id = parts[parts.length - 1];
+  return id || null;
 }
 
 function extractTitle($element: Cheerio<Element>): string | null {
@@ -79,17 +67,19 @@ function extractAuthors($element: Cheerio<Element>): string[] {
     .text()
     .trim();
 
-  if (!authorText) return [];
+  if (!authorText) {
+    return [];
+  }
 
   return authorText
     .split(/[;,]/)
-    .map((author: string) => author.trim())
-    .filter((author: string) => author.length > 0);
+    .map((author) => author.trim())
+    .filter((author) => author.length > 0);
 }
 
 function extractMetadata($element: Cheerio<Element>) {
   const metadataText = $element.find(".text-gray-800").text();
-  const parts = metadataText.split(" · ").map((part: string) => part.trim());
+  const parts = metadataText.split(" · ").map((part) => part.trim());
 
   const rawFileType = parts[1] || "";
   const fileType = rawFileType.replace(/\s*\[.*?\]\s*/g, "").trim();
@@ -100,22 +90,26 @@ function extractMetadata($element: Cheerio<Element>) {
   const year = extractYear(parts[3]);
 
   return {
-    fileType,
-    fileSize,
+    fileType: fileType || undefined,
+    fileSize: fileSize || undefined,
     language: languageCode,
     year,
   };
 }
 
 function extractLanguageCode(text: string | undefined): string | undefined {
-  if (!text) return undefined;
+  if (!text) {
+    return undefined;
+  }
 
   const match = text.match(/\[([a-z]{2,3})\]/i);
   return match?.[1]?.toLowerCase();
 }
 
 function extractYear(text: string | undefined): number | undefined {
-  if (!text) return undefined;
+  if (!text) {
+    return undefined;
+  }
 
   const match = text.match(/\b(19|20)\d{2}\b/);
   return match ? parseInt(match[0], 10) : undefined;

@@ -1,25 +1,15 @@
-import { type } from "arktype";
-
-export const BookSchema = type({
-  id: "string",
-  title: "string",
-  authors: "string[]",
-  "fileType?": "string",
-  "fileSize?": "string",
-  "year?": "number",
-  "language?": "string",
-  "thumbnail?": "string",
-});
-
-export type Book = typeof BookSchema.infer;
-
-export interface SearchOptions {
+export interface Book {
+  id: string;
+  title: string;
+  authors: string[];
   fileType?: string;
+  fileSize?: string;
+  year?: number;
   language?: string;
-  limit?: number;
+  thumbnail?: string;
 }
 
 export interface DownloadUrls {
   ipfs?: string;
-  mirrors: string[];
+  libgenMirrors: string[];
 }

@@ -1,71 +1,41 @@
+import { fetchHtml, fetchJson } from "./http.ts";
+import { parseLibgenMirrors, extractIpfsCidFromMetadata } from "./parsers/download.ts";
 import type { DownloadUrls } from "./types.ts";
-import { ANNAS_ARCHIVE_BASE, LIBGEN_BASE, IPFS_GATEWAY, USER_AGENT } from "./constants.ts";
-import { createNetworkError } from "./errors.ts";
-import { parseLibgenMirrors } from "./parsers/download-page.ts";
+
+const ANNAS_ARCHIVE_BASE = "https://annas-archive.org";
+const LIBGEN_BASE = "http://libgen.li";
+const IPFS_GATEWAY = "https://gateway.ipfs.io/ipfs";
 
 export async function getDownloadUrls(bookId: string): Promise<DownloadUrls> {
   if (!bookId?.trim()) {
     throw new TypeError("Book ID cannot be empty");
   }
 
-  const urls: DownloadUrls = {
-    mirrors: [],
+  const result: DownloadUrls = {
+    libgenMirrors: [],
   };
 
   try {
     const metadataUrl = `${ANNAS_ARCHIVE_BASE}/dyn/small_file/md5/${bookId}`;
     const metadata = await fetchJson(metadataUrl);
-    const ipfsCid = extractIpfsCid(metadata);
+    const ipfsCid = extractIpfsCidFromMetadata(metadata);
 
     if (ipfsCid) {
-      urls.ipfs = `${IPFS_GATEWAY}/${ipfsCid}`;
+      result.ipfs = `${IPFS_GATEWAY}/${ipfsCid}`;
     }
-  } catch (_err) {
-    // Continue if not found
+  } catch {
+    // IPFS not available, continue to Libgen mirrors (slower)
   }
 
-  const libgenUrl = `${LIBGEN_BASE}/library.php?md5=${bookId}`;
-  const libgenHtml = await fetchHtml(libgenUrl);
-  const mirrors = parseLibgenMirrors(libgenHtml);
+  try {
+    const libgenUrl = `${LIBGEN_BASE}/library.php?md5=${bookId}`;
+    const libgenHtml = await fetchHtml(libgenUrl);
+    const mirrors = parseLibgenMirrors(libgenHtml);
 
-  urls.mirrors = mirrors.map((path) => `${LIBGEN_BASE}/${path}`);
-
-  return urls;
-}
-
-function extractIpfsCid(data: Record<string, unknown>): string | null {
-  if (Array.isArray(data["ipfs_cids"]) && data["ipfs_cids"].length > 0) {
-    const cid = data["ipfs_cids"][0];
-    return typeof cid === "string" ? cid : null;
+    result.libgenMirrors = mirrors;
+  } catch {
+    // Libgen mirrors not available
   }
 
-  if (typeof data["ipfs"] === "string") {
-    return data["ipfs"];
-  }
-
-  return null;
-}
-
-async function fetchHtml(url: string): Promise<string> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-  });
-
-  if (!response.ok) {
-    throw createNetworkError(response.status, url);
-  }
-
-  return response.text();
-}
-
-async function fetchJson(url: string): Promise<Record<string, unknown>> {
-  const response = await fetch(url, {
-    headers: { "User-Agent": USER_AGENT },
-  });
-
-  if (!response.ok) {
-    throw createNetworkError(response.status, url);
-  }
-
-  return response.json() as Promise<Record<string, unknown>>;
+  return result;
 }
