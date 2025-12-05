@@ -14,7 +14,11 @@ function splitIntoAuthors(text: string): string[] {
   }
 
   if (text.includes(" and ") || text.includes(" & ")) {
-    return text.split(/\s+(?:and|&)\s+/);
+    return text
+      .split(/\s+(?:and|&)\s+/)
+      .flatMap((segment) => segment.split(","))
+      .map((part) => part.trim())
+      .filter(Boolean);
   }
 
   if (shouldSplitByComma(text)) {
@@ -52,7 +56,7 @@ function isValid(author: string): boolean {
 
 function normalizeAuthor(author: string): string {
   if (isSingleWord(author)) {
-    return author.trim();
+    return capitalizeWords(author.trim());
   }
 
   if (isLastNameFirstFormat(author)) {
