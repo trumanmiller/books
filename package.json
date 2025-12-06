@@ -12,7 +12,7 @@
   "author": "David Duran <dadch1404@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/totallynotdavid/books.git"
+    "url": "git+https://github.com/totallynotdavid/books.git"
   },
   "bugs": {
     "url": "https://github.com/totallynotdavid/books/issues"
