@@ -24,9 +24,10 @@ export const PeriodDelimitedStrategy: AuthorSplitStrategy = {
 };
 
 // Split by comma + and/&: "Ray Yao, Ada R. Swift, and Ruby C. Perl"
+// Only matches when commas separate multiple authors, not "LastName, First and LastName, First"
 export const CommaAndStrategy: AuthorSplitStrategy = {
   name: "comma-and",
-  detect: (text) => text.includes(",") && (text.includes(" and ") || text.includes(" & ")),
+  detect: (text) => text.includes(",") && (text.includes(", and ") || text.includes(", & ")),
   split: (text) => {
     return text
       .split(",")
@@ -74,10 +75,10 @@ export const CommaStrategy: AuthorSplitStrategy = {
       return [`${firstName} ${lastName}`, third];
     }
 
-    // Don't split "LastName, FirstName" format (both parts 1-2 words)
+    // Don't split "LastName, FirstName" format
     if (parts.length === 2) {
       const wordCounts = parts.map((p) => p.split(/\s+/).length);
-      if (wordCounts.every((count) => count <= 2)) {
+      if ((wordCounts[0] ?? 0) <= 3 && (wordCounts[1] ?? 0) <= 2) {
         return [text];
       }
     }
