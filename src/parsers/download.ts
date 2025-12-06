@@ -1,35 +1,23 @@
 import { load } from "cheerio";
 
-const LIBGEN_BASE = "http://libgen.li";
+const LIBGEN_BASE = "https://libgen.li";
 
-export function parseLibgenMirrors(html: string): string[] {
+export function parseIpfsUrl(html: string): string | null {
   const $ = load(html);
-  const mirrors: string[] = [];
-
-  $('a:has(h2:contains("GET"))').each((_, element) => {
-    const href = $(element).attr("href");
-    if (href) {
-      const fullUrl = href.startsWith("http") ? href : `${LIBGEN_BASE}${href}`;
-      mirrors.push(fullUrl);
-    }
-  });
-
-  return mirrors;
+  const ipfsLink = $('a[title*="IPFS"] span.badge:contains("IPFS.io")').parent().attr("href");
+  return ipfsLink || null;
 }
 
-export function extractIpfsCidFromMetadata(data: unknown): string | null {
-  if (typeof data !== "object" || data === null) return null;
+export function parseAdsPhpUrl(html: string): string | null {
+  const $ = load(html);
+  const adsLink = $('a[href*="ads.php"]').attr("href");
+  if (!adsLink) return null;
+  return adsLink.startsWith("http") ? adsLink : `${LIBGEN_BASE}${adsLink}`;
+}
 
-  const record = data as Record<string, unknown>;
-
-  if (Array.isArray(record["ipfs_cids"]) && record["ipfs_cids"].length > 0) {
-    const cid = record["ipfs_cids"][0];
-    return typeof cid === "string" ? cid : null;
-  }
-
-  if (typeof record["ipfs"] === "string") {
-    return record["ipfs"];
-  }
-
-  return null;
+export function parseGetPhpUrl(html: string): string | null {
+  const $ = load(html);
+  const getLink = $('a[href*="get.php"]').attr("href");
+  if (!getLink) return null;
+  return getLink.startsWith("http") ? getLink : `${LIBGEN_BASE}/${getLink}`;
 }
