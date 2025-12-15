@@ -9,7 +9,7 @@ export async function searchBooks(query: string): Promise<Book[]> {
     throw new TypeError("Query cannot be empty");
   }
 
-  const url = `${ANNAS_ARCHIVE_BASE}/search?q=${encodeURIComponent(query)}`;
+  const url = `${ANNAS_ARCHIVE_BASE}/search?&ext=epub&q=${encodeURIComponent(query)}`;
   const html = await fetchHtml(url);
 
   return parseSearchResults(html);
